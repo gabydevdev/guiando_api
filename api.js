@@ -2,15 +2,19 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
-const api = express();
 
+const api = express();
 const cors = require("cors");
+
 api.use(cors());
+api.use(express.json());
 
 const cleanData = require("./utils/dataCleaner");
 
 const baseUrlPath = process.env.BASE_URL_PATH || "";
 const port = process.env.PORT || 3000;
+
+const bookingsDataLogs = path.join(__dirname, "booking_data");
 
 if (baseUrlPath) {
 	api.use(baseUrlPath, express.static(path.join(__dirname, "public")));
@@ -18,9 +22,21 @@ if (baseUrlPath) {
 	api.use("/", express.static(path.join(__dirname, "public")));
 }
 
-api.use(express.json());
-
-const bookingsDataLogs = path.join(__dirname, "booking_data");
+/**
+ * Reads and parses a JSON file asynchronously.
+ *
+ * @param {string} filePath - The path to the file to be read.
+ * @returns {object|null} - The parsed JSON object, or null if an error occurs.
+ */
+function readAndParseFile(filePath) {
+    try {
+        const fileData = fs.readFileSync(filePath, "utf8");
+        return JSON.parse(fileData);
+    } catch (err) {
+        console.error(`Error reading or parsing file ${filePath}:`, err);
+        return null;
+    }
+}
 
 /**
  * GET /api/bookings
@@ -60,8 +76,7 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 				const filePath = path.join(bookingsDataLogs, file);
 				try {
 					// Read the file content and parse it as JSON.
-					const fileData = fs.readFileSync(filePath, "utf8");
-					const parsedData = JSON.parse(fileData);
+					const parsedData = readAndParseFile(filePath);
 
 					// Extract and format the creation date.
 					const creationDate = parsedData.creationDate;
@@ -142,7 +157,7 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 		// Loop through each file to find the booking with the specified bookingId
 		for (const file of files) {
 			const filePath = path.join(bookingsDataLogs, file);
-			const fileData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+			const fileData = readAndParseFile(filePath);
 
 			// Check if the current file contains the requested bookingId
 			if (fileData.bookingId == bookingIdQuery) {
@@ -161,12 +176,8 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 					filteredData.activityBookings = cleanData(filteredData.activityBookings);
 				}
 
-				// Extract and format the creation date
-				const creationDateISO = new Date(parseInt(filteredData.creationDate, 10)).toISOString();
-
 				// Construct the final response object with bookingId at the top
 				foundBooking = {
-					creationDateISO: creationDateISO,
 					bookingId: filteredData.bookingId, // Place bookingId first
 					...filteredData, // Include all other data except excluded fields
 				};
