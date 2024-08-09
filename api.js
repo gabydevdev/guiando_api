@@ -78,13 +78,15 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 
 					// Extract and format the creation date.
 					const startDateTimeISO = new Date(parseInt(activityBookings[0].startDateTime, 10)).toISOString();
+					const endDateTimeISO = new Date(parseInt(activityBookings[0].endDateTime, 10)).toISOString();
 
 					// Return an object containing bookingId, creationDate, and creationDateISO.
 					return {
 						creationDateISO: creationDateISO,
 						// creationDateUTC: creationDateUTC,
 						bookingId: parsedData.bookingId,
-						startDateTime: startDateTimeISO,
+						startDateTimeISO: startDateTimeISO,
+						endDateTimeISO: endDateTimeISO,
 					};
 				} catch (err) {
 					console.error(`Error reading or parsing file ${filePath}:`, err);
