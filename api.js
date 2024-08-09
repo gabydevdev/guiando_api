@@ -147,7 +147,12 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 				// Use loose equality (==) to allow type coercion
 
 				// Exclude specified fields like customerPayments, bookingChannel, carRental
-				const { accommodationBookings, affiliate, bookingChannel, ...filteredData } = fileData;
+				const {
+					accommodationBookings,
+					affiliate,
+					bookingChannel,
+					...filteredData
+				} = fileData;
 
 				// Clean the activityBookings field if it exists
 				if (filteredData.activityBookings) {
@@ -156,14 +161,12 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 
 				// Extract and format the creation date
 				const creationDateISO = new Date(parseInt(filteredData.creationDate, 10)).toISOString();
-				const creationDateLocal = new Date(creationDateISO).toLocaleDateString();
 
 				// Construct the final response object with bookingId at the top
 				foundBooking = {
+					creationDateISO: creationDateISO,
 					bookingId: filteredData.bookingId, // Place bookingId first
 					...filteredData, // Include all other data except excluded fields
-					creationDateISO: creationDateISO,
-					creationDateLocal: creationDateLocal,
 				};
 				break; // Stop the loop once the booking is found
 			}
