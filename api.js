@@ -22,15 +22,37 @@ api.use(express.json());
 
 const bookingsDataLogs = path.join(__dirname, "booking_data");
 
+/**
+ * GET /api/bookings
+ * Retrieves a paginated list of bookings from the data logs.
+ *
+ * Query Parameters:
+ *   - page (number, optional): The page number to retrieve. Defaults to 1.
+ *   - limit (number, optional): The number of items per page. Defaults to 12.
+ *
+ * Response:
+ *   - total (number): The total number of bookings.
+ *   - nextPage (number|null): The next page number, or null if there are no more pages.
+ *   - prevPage (number|null): The previous page number, or null if this is the first page.
+ *   - data (array): The list of bookings for the current page.
+ */
 api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
-	const page = parseInt(req.query.page, 10) || 1;
+	// Parse the page and limit query parameters. Defaults are page 1 and limit 12.
+	const page  = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 12;
 
+	// Read the directory containing booking data logs.
 	fs.readdir(bookingsDataLogs, (err, files) => {
 		if (err) {
 			console.error("Could not list the directory.", err);
 			res.status(500).send("Internal server error");
 		}
+
+		files.sort((a, b) => {
+			return (
+				fs.statSync(path.join(bookingsDataLogs, b)).mtime.getTime() - fs.statSync(path.join(bookingsDataLogs, a)).mtime.getTime()
+			);
+		});
 
 		// Map over each file to read and parse booking data.
 		const bookings = files
@@ -48,11 +70,21 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					// Convert ISO date to local date string
 					// const creationDateUTC = new Date(creationDateISO).toUTCString();
 
+					// Clean the activityBookings field if it exists
+					let activityBookings;
+					if (parsedData.activityBookings) {
+						activityBookings = cleanData(parsedData.activityBookings);
+					}
+
+					// Extract and format the creation date.
+					const startDateTimeISO = new Date(parseInt(activityBookings[0].startDateTime, 10)).toISOString();
+
 					// Return an object containing bookingId, creationDate, and creationDateISO.
 					return {
 						creationDateISO: creationDateISO,
 						// creationDateUTC: creationDateUTC,
 						bookingId: parsedData.bookingId,
+						startDateTime: startDateTimeISO,
 					};
 				} catch (err) {
 					console.error(`Error reading or parsing file ${filePath}:`, err);
