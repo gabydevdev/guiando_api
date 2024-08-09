@@ -1,0 +1,21 @@
+{
+	"name": "guiando-api",
+	"version": "2.0.0",
+	"description": "",
+	"main": "api.js",
+	"scripts": {
+		"start": "node api.js"
+	},
+	"author": "gabriela",
+	"license": "ISC",
+	"dependencies": {
+		"body-parser": "^1.20.2",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"express": "^4.19.2"
+	},
+	"devDependencies": {
+		"@types/body-parser": "^1.19.5",
+		"@types/express": "^4.17.21"
+	}
+}
