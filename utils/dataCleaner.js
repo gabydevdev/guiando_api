@@ -2,54 +2,56 @@
  * Cleans and formats a JSON string to be properly parsed as a JavaScript object.
  *
  * @param {string} string - The improperly formatted JSON string to clean.
- * @returns {object} - The cleaned and parsed JavaScript object.
+ * @returns {object|null} - The cleaned and parsed JavaScript object, or null if parsing fails.
  */
 function cleanData(string) {
-	// Define replacements for Python-style booleans, None, and hex escape sequences
-	const replacements = {
-		"'": '"', // Replace single quotes with double quotes
-		False: "false", // Replace Python False with JavaScript false
-		True: "true", // Replace Python True with JavaScript true
-		None: "null", // Replace Python None with JavaScript null
-		"\\x[0-9A-Fa-f]{2}": "", // Remove hexadecimal escape sequences like \xNN
-		SINGLE_QUOTE_STANDBY: "'", // Placeholder for restoring single quotes
-	};
+	let cleanedString;
 
-	// Perform replacements using the defined dictionary
-	let cleanedString = string.replace(/'/g, replacements["'"]);
+	try {
+		// Step 1: Handle single quotes used for contractions and replace with a placeholder
+		cleanedString = string.replace(/\b(\w*)'(\w*)\b/g, "$1SINGLE_QUOTE_STANDBY$2");
+		console.log("Step 1 (Single quotes to placeholder)");
 
-	cleanedString = cleanedString.replace(
-		/False|True|None/g,
-		(match) => replacements[match]
-	);
+		// Step 2: Replace escaped double quotes with a placeholder
+		cleanedString = cleanedString.replace(/\\"/g, "DOUBLE_QUOTES_STANDBY");
+		console.log("Step 2 (Escaped double quotes to placeholder)");
 
-	cleanedString = cleanedString.replace(
-		/\\x[0-9A-Fa-f]{2}/g,
-		replacements["\\x[0-9A-Fa-f]{2}"]
-	);
+		// Step 3: Replace double quotes with a placeholder
+		cleanedString = cleanedString.replace(/"/g, "DOUBLE_QUOTES_STANDBY");
+		console.log("Step 2 (Double quotes to placeholder)");
 
-	// Handle in-string double quotes that need to be temporarily replaced
-	cleanedString = cleanedString.replace(
-		/(?<=[A-Za-z0-9])"(?=[A-Za-z0-9])/g,
-		"SINGLE_QUOTE_STANDBY"
-	);
+		// Step 3: Replace DOUBLE_QUOTES_STANDBY only for non-space values
+		cleanedString = cleanedString.replace(/DOUBLE_QUOTES_STANDBY(\S*?)DOUBLE_QUOTES_STANDBY/g, "$1");
+		console.log("Step 3 (Specific DOUBLE_QUOTES_STANDBY replacement)");
 
-	// Perform other specific replacements
-	cleanedString = cleanedString
-		.replace(/="/g, "=&quot;")
-		.replace(/;"/g, ";&quot;")
-		.replace(/">/g, "&quot;&gt;");
+		// Step 4: Perform replacements for Python-style booleans, None, hex escape sequences
+		// and other explicit fixes for HTML elements
+		cleanedString = cleanedString
+			.replace(/False/g, "false") // Replace Python False with JavaScript false
+			.replace(/True/g, "true") // Replace Python True with JavaScript true
+			.replace(/None/g, "null") // Replace Python None with JavaScript null
+			.replace(/\\x[0-9A-Fa-f]{2}/g, "") // Remove hexadecimal escape sequences like \xNN
+			.replace(/="/g, "=&quot;")
+			.replace(/;"/g, ";&quot;")
+			.replace(/">/g, "&quot;&gt;");
 
-	// Restore single quotes that were placeholders
-	cleanedString = cleanedString.replace(
-		/SINGLE_QUOTE_STANDBY/g,
-		replacements["SINGLE_QUOTE_STANDBY"]
-	);
+		console.log("Step 4 (Booleans, None, Hex sequences, etc.)");
 
-	// Parse the cleaned string into a JavaScript object
-	const formattedData = JSON.parse(cleanedString);
+		// Step 5: Replace single quotes with double quotes globally
+		cleanedString = cleanedString.replace(/'/g, '"');
+		console.log("Step 5 (Single quotes to double quotes)");
 
-	return formattedData;
+		// Step 6: Replace remaining DOUBLE_QUOTES_STANDBY with double quotes
+		cleanedString = cleanedString.replace(/DOUBLE_QUOTES_STANDBY/g, '"');
+		console.log("Step 7 (Final DOUBLE_QUOTES_STANDBY replacement)");
+
+		// Step 8: Parse the cleaned string into a JavaScript object
+		return JSON.parse(cleanedString);
+	} catch (error) {
+		console.error("Parsing error at step:", error.message);
+		console.error("Current state of string when error occurred:", cleanedString);
+		return null;
+	}
 }
 
 // Export the cleanData function for use in other files

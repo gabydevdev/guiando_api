@@ -42,28 +42,14 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					const parsedData = JSON.parse(fileData);
 
 					// Destructure the parsedData object to exclude customerPayments
-					const {
-						accommodationBookings,
-						...filteredData
-					} = parsedData;
-
-					// Clean the activityBookings field if it exists
-					// if (filteredData.activityBookings) {
-					// 	filteredData.activityBookings = cleanData(
-					// 		filteredData.activityBookings
-					// 	);
-					// }
+					const { accommodationBookings, ...filteredData } = parsedData;
 
 					// Extract and format the creation date.
 					const creationDate = filteredData.creationDate;
-					const creationDateISO = new Date(
-						parseInt(creationDate, 10)
-					).toISOString();
+					const creationDateISO = new Date(parseInt(creationDate, 10)).toISOString();
 
 					// Convert ISO date to local date string
-					const creationDateUTC = new Date(
-						creationDateISO
-					).toUTCString();
+					const creationDateUTC = new Date(creationDateISO).toUTCString();
 
 					// Return an object containing bookingId, creationDate, and creationDateISO.
 					return {
@@ -73,10 +59,7 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 						creationDateUTC: creationDateUTC,
 					};
 				} catch (err) {
-					console.error(
-						`Error reading or parsing file ${filePath}:`,
-						err
-					);
+					console.error(`Error reading or parsing file ${filePath}:`, err);
 					return null; // Return null if there's an error.
 				}
 			})
@@ -136,15 +119,16 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 				// Use loose equality (==) to allow type coercion
 
 				// Exclude specified fields like customerPayments, bookingChannel, carRental
-				const { accommodationBookings, ...filteredData } = fileData;
+				const { accommodationBookings, affiliate, bookingChannel, ...filteredData } = fileData;
+
+				// Clean the activityBookings field if it exists
+				if (filteredData.activityBookings) {
+					filteredData.activityBookings = cleanData(filteredData.activityBookings);
+				}
 
 				// Extract and format the creation date
-				const creationDateISO = new Date(
-					parseInt(filteredData.creationDate, 10)
-				).toISOString();
-				const creationDateLocal = new Date(
-					creationDateISO
-				).toLocaleDateString();
+				const creationDateISO = new Date(parseInt(filteredData.creationDate, 10)).toISOString();
+				const creationDateLocal = new Date(creationDateISO).toLocaleDateString();
 
 				// Construct the final response object with bookingId at the top
 				foundBooking = {
