@@ -41,22 +41,18 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					const fileData = fs.readFileSync(filePath, "utf8");
 					const parsedData = JSON.parse(fileData);
 
-					// Destructure the parsedData object to exclude customerPayments
-					const { accommodationBookings, ...filteredData } = parsedData;
-
 					// Extract and format the creation date.
-					const creationDate = filteredData.creationDate;
+					const creationDate = parsedData.creationDate;
 					const creationDateISO = new Date(parseInt(creationDate, 10)).toISOString();
 
 					// Convert ISO date to local date string
-					const creationDateUTC = new Date(creationDateISO).toUTCString();
+					// const creationDateUTC = new Date(creationDateISO).toUTCString();
 
 					// Return an object containing bookingId, creationDate, and creationDateISO.
 					return {
-						bookingId: filteredData.bookingId,
-						...filteredData,
 						creationDateISO: creationDateISO,
-						creationDateUTC: creationDateUTC,
+						// creationDateUTC: creationDateUTC,
+						bookingId: parsedData.bookingId,
 					};
 				} catch (err) {
 					console.error(`Error reading or parsing file ${filePath}:`, err);
