@@ -53,11 +53,22 @@ Retrieve a paginated list of bookings.
 
 -   `page`: Page number (default is 1).
 -   `limit`: Number of bookings per page (default is 12).
+-   `startDateTime`: (Optional) Filter bookings that start on or after this date and time.
+-   `endDateTime`: (Optional) Filter bookings that end on or before this date and time.
+-   `filter`: (Optional) Predefined date filters such as today, tomorrow, or this_week.
 
 **Example Request:**
 
+Retrieve bookings for today:
+
 ```bash
-curl http://localhost:3000/api/bookings?page=1&limit=10
+curl http://localhost:3000/api/bookings?filter=today
+```
+
+Retrieve bookings for a specific date range:
+
+```bash
+curl http://localhost:3000/api/bookings/?startDateTime=2024-08-10T00:00:00&endDateTime=2024-08-10T23:59:59
 ```
 
 **Response:**
