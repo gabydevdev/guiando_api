@@ -11,10 +11,10 @@ api.use(express.json());
 
 const cleanData = require("./utils/dataCleaner");
 
+const bookingsDataLogs = path.join(__dirname, "booking_data");
+
 const baseUrlPath = process.env.BASE_URL_PATH || "";
 const port = process.env.PORT || 3000;
-
-const bookingsDataLogs = path.join(__dirname, "booking_data");
 
 if (baseUrlPath) {
 	api.use(baseUrlPath, express.static(path.join(__dirname, "public")));
@@ -57,6 +57,9 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 	const page  = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 12;
 
+	// Get the current date and time
+    const currentDateTime = new Date();
+
 	// Read the directory containing booking data logs.
 	fs.readdir(bookingsDataLogs, (err, files) => {
 		if (err) {
@@ -78,10 +81,6 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					// Read the file content and parse it as JSON.
 					const parsedData = readAndParseFile(filePath);
 
-					// Extract and format the creation date.
-					const creationDate = parsedData.creationDate;
-					const creationDateISO = new Date(parseInt(creationDate, 10)).toISOString();
-
 					// Convert ISO date to local date string
 					// const creationDateUTC = new Date(creationDateISO).toUTCString();
 
@@ -91,18 +90,22 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 						activityBookings = cleanData(parsedData.activityBookings);
 					}
 
-					// Extract and format the creation date.
 					const startDateTimeISO = new Date(parseInt(activityBookings[0].startDateTime, 10)).toISOString();
 					const endDateTimeISO = new Date(parseInt(activityBookings[0].endDateTime, 10)).toISOString();
 
-					// Return an object containing bookingId, creationDate, and creationDateISO.
-					return {
-						creationDateISO: creationDateISO,
-						// creationDateUTC: creationDateUTC,
-						bookingId: parsedData.bookingId,
-						startDateTimeISO: startDateTimeISO,
-						endDateTimeISO: endDateTimeISO,
-					};
+					// Filter out entries where the start date is before the current date and time
+					if (new Date(startDateTimeISO) >= currentDateTime) {
+						return {
+							creationDateISO: new Date(parseInt(parsedData.creationDate, 10)).toISOString(),
+							// creationDateUTC: creationDateUTC,
+							bookingId: parsedData.bookingId,
+							startDateTimeISO: startDateTimeISO,
+							endDateTimeISO: endDateTimeISO,
+						};
+					} else {
+						return null; // Exclude bookings with start dates in the past
+					}
+
 				} catch (err) {
 					console.error(`Error reading or parsing file ${filePath}:`, err);
 					return null; // Return null if there's an error.
@@ -114,6 +117,7 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 		const endIndex = startIndex + limit;
 
 		const result = {
+			queryDate: currentDateTime,
 			total: bookings.length,
 			nextPage: endIndex < bookings.length ? page + 1 : null,
 			prevPage: page > 1 ? page - 1 : null,
