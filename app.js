@@ -54,15 +54,44 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 	const page = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 12;
 
-	const currentDateTime = new Date();
+	let startDateTimeFilter, endDateTimeFilter;
 
-	// Fallback to the current date and time if startDateTime is not provided
-	const startDateTimeFilter = req.query.startDateTime ? new Date(req.query.startDateTime) : currentDateTime;
+	// Determine the date range based on the filter query
+	switch (req.query.filter) {
+		case "today":
+			startDateTimeFilter = new Date(); // Current time as start time
+			endDateTimeFilter = new Date();
+			endDateTimeFilter.setHours(23, 59, 59); // End of today
+			break;
 
-	// Fallback to a far future date if endDateTime is not provided
-	const endDateTimeFilter = req.query.endDateTime
-		? new Date(req.query.endDateTime)
-		: new Date("9999-12-31T23:59:59Z"); // This date ensures all relevant bookings are included
+		case "tomorrow":
+			startDateTimeFilter = new Date();
+			startDateTimeFilter.setDate(startDateTimeFilter.getDate() + 1);
+			startDateTimeFilter.setHours(0, 0, 0); // Start of tomorrow
+			endDateTimeFilter = new Date();
+			endDateTimeFilter.setDate(endDateTimeFilter.getDate() + 1);
+			endDateTimeFilter.setHours(23, 59, 59); // End of tomorrow
+			break;
+
+		case "this_week":
+			startDateTimeFilter = new Date();
+			startDateTimeFilter.setDate(startDateTimeFilter.getDate() - startDateTimeFilter.getDay()); // Start of the week (Sunday)
+			startDateTimeFilter.setHours(0, 0, 0);
+
+			endDateTimeFilter = new Date();
+			endDateTimeFilter.setDate(startDateTimeFilter.getDate() + 6); // End of the week (Saturday)
+			endDateTimeFilter.setHours(23, 59, 59);
+			break;
+
+		default:
+			// Fallback to the provided startDateTime or current time
+			startDateTimeFilter = req.query.startDateTime ? new Date(req.query.startDateTime) : new Date();
+			// Fallback to provided endDateTime or a far future date
+			endDateTimeFilter = req.query.endDateTime
+				? new Date(req.query.endDateTime)
+				: new Date("9999-12-31T23:59:59Z");
+			break;
+	}
 
 	// Read the directory containing booking data logs.
 	fs.readdir(bookingsDataLogs, (err, files) => {
@@ -101,7 +130,7 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					// Filter entries by date range
 					if (
 						new Date(startDateTimeISO) >= startDateTimeFilter &&
-						(!req.query.endDateTime || new Date(endDateTimeISO) <= endDateTimeFilter)
+						new Date(endDateTimeISO) < endDateTimeFilter
 					) {
 						return {
 							creationDateISO: new Date(parseInt(parsedData.creationDate, 10)).toISOString(),
@@ -126,7 +155,7 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 		const totalPages = Math.ceil(bookings.length / limit);
 
 		const result = {
-			queryDate: currentDateTime,
+			queryDate: new Date(),
 			total: bookings.length,
 			nextPage: endIndex < bookings.length ? page + 1 : null,
 			prevPage: page > 1 ? page - 1 : null,
