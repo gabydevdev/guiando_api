@@ -26,13 +26,13 @@ api.use(baseUrlPath, express.static(path.join(__dirname, "/public")));
  * @returns {object|null} - The parsed JSON object, or null if an error occurs.
  */
 function readAndParseFile(filePath) {
-    try {
-        const fileData = fs.readFileSync(filePath, "utf8");
-        return JSON.parse(fileData);
-    } catch (err) {
-        console.error(`Error reading or parsing file ${filePath}:`, err);
-        return null;
-    }
+	try {
+		const fileData = fs.readFileSync(filePath, "utf8");
+		return JSON.parse(fileData);
+	} catch (err) {
+		console.error(`Error reading or parsing file ${filePath}:`, err);
+		return null;
+	}
 }
 
 /**
@@ -54,8 +54,15 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 	const page = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 12;
 
-	// Get the current date and time
-    const currentDateTime = new Date();
+	const currentDateTime = new Date();
+
+	// Fallback to the current date and time if startDateTime is not provided
+	const startDateTimeFilter = req.query.startDateTime ? new Date(req.query.startDateTime) : currentDateTime;
+
+	// Fallback to a far future date if endDateTime is not provided
+	const endDateTimeFilter = req.query.endDateTime
+		? new Date(req.query.endDateTime)
+		: new Date("9999-12-31T23:59:59Z"); // This date ensures all relevant bookings are included
 
 	// Read the directory containing booking data logs.
 	fs.readdir(bookingsDataLogs, (err, files) => {
@@ -91,17 +98,19 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					const startDateTimeISO = new Date(parseInt(activityBookings[0].startDateTime, 10)).toISOString();
 					const endDateTimeISO = new Date(parseInt(activityBookings[0].endDateTime, 10)).toISOString();
 
-					// Filter out entries where the start date is before the current date and time
-					if (new Date(startDateTimeISO) >= currentDateTime) {
+					// Filter entries by date range
+					if (
+						new Date(startDateTimeISO) >= startDateTimeFilter &&
+						(!req.query.endDateTime || new Date(endDateTimeISO) <= endDateTimeFilter)
+					) {
 						return {
 							creationDateISO: new Date(parseInt(parsedData.creationDate, 10)).toISOString(),
-							// creationDateUTC: creationDateUTC,
 							bookingId: parsedData.bookingId,
 							startDateTimeISO: startDateTimeISO,
 							endDateTimeISO: endDateTimeISO,
 						};
 					} else {
-						return null; // Exclude bookings with start dates in the past
+						return null;
 					}
 				} catch (err) {
 					console.error(`Error reading or parsing file ${filePath}:`, err);
