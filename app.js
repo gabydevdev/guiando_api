@@ -170,12 +170,7 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 				// Use loose equality (==) to allow type coercion
 
 				// Exclude specified fields like customerPayments, bookingChannel, carRental
-				const {
-					accommodationBookings,
-					affiliate,
-					bookingChannel,
-					...filteredData
-				} = fileData;
+				const { accommodationBookings, affiliate, bookingChannel, ...filteredData } = fileData;
 
 				// Clean the activityBookings field if it exists
 				if (filteredData.activityBookings) {
