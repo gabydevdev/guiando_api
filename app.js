@@ -146,7 +146,8 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					return null; // Return null if there's an error.
 				}
 			})
-			.filter(Boolean); // Filter out any null values resulting from errors.
+			.filter(Boolean) // Filter out any null values resulting from errors.
+			.sort((a, b) => new Date(a.startDateTimeISO) - new Date(b.startDateTimeISO)); // Sort by startDateTimeISO
 
 		const startIndex = (page - 1) * limit;
 		const endIndex = startIndex + limit;
