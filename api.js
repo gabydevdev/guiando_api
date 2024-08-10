@@ -69,7 +69,8 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 
 		files.sort((a, b) => {
 			return (
-				fs.statSync(path.join(bookingsDataLogs, b)).mtime.getTime() - fs.statSync(path.join(bookingsDataLogs, a)).mtime.getTime()
+				fs.statSync(path.join(bookingsDataLogs, b)).mtime.getTime() -
+				fs.statSync(path.join(bookingsDataLogs, a)).mtime.getTime()
 			);
 		});
 
@@ -105,7 +106,6 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 					} else {
 						return null; // Exclude bookings with start dates in the past
 					}
-
 				} catch (err) {
 					console.error(`Error reading or parsing file ${filePath}:`, err);
 					return null; // Return null if there's an error.
@@ -116,11 +116,16 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 		const startIndex = (page - 1) * limit;
 		const endIndex = startIndex + limit;
 
+		// Calculate total pages
+		const totalPages = Math.ceil(bookings.length / limit);
+
 		const result = {
 			queryDate: currentDateTime,
 			total: bookings.length,
 			nextPage: endIndex < bookings.length ? page + 1 : null,
 			prevPage: page > 1 ? page - 1 : null,
+			page: page, // Current page number
+			totalPages: totalPages, // Total number of pages
 			data: bookings.slice(startIndex, endIndex),
 		};
 
