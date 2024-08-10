@@ -2,12 +2,18 @@
 	"name": "guiando-api",
 	"version": "2.0.0",
 	"description": "",
+	"keywords": [
+		"express",
+		"javascript",
+		"node",
+		"package.json",
+		"webhooks",
+		"api"
+	],
 	"main": "app.js",
 	"scripts": {
 		"start": "node app.js"
 	},
-	"author": "gabriela",
-	"license": "ISC",
 	"dependencies": {
 		"body-parser": "^1.20.2",
 		"cors": "^2.8.5",
