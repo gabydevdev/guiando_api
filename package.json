@@ -2,9 +2,9 @@
 	"name": "guiando-api",
 	"version": "2.0.0",
 	"description": "",
-	"main": "api.js",
+	"main": "app.js",
 	"scripts": {
-		"start": "node api.js"
+		"start": "node app.js"
 	},
 	"author": "gabriela",
 	"license": "ISC",

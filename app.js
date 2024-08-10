@@ -2,6 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+const { jsonrepair } = require("jsonrepair");
 
 const api = express();
 const cors = require("cors");
@@ -9,18 +10,14 @@ const cors = require("cors");
 api.use(cors());
 api.use(express.json());
 
-const cleanData = require("./utils/dataCleaner");
+// const cleanData = require("./utils/dataCleaner");
 
 const bookingsDataLogs = path.join(__dirname, "booking_data");
 
 const baseUrlPath = process.env.BASE_URL_PATH || "";
 const port = process.env.PORT || 3000;
 
-if (baseUrlPath) {
-	api.use(baseUrlPath, express.static(path.join(__dirname, "public")));
-} else {
-	api.use("/", express.static(path.join(__dirname, "public")));
-}
+api.use(baseUrlPath, express.static(path.join(__dirname, "/public")));
 
 /**
  * Reads and parses a JSON file asynchronously.
@@ -36,6 +33,20 @@ function readAndParseFile(filePath) {
         console.error(`Error reading or parsing file ${filePath}:`, err);
         return null;
     }
+}
+
+/**
+ * Cleans and formats a JSON string to be properly parsed as a JavaScript object.
+ *
+ * @param {string} string - The improperly formatted JSON string to clean.
+ * @returns {object|null} - The cleaned and parsed JavaScript object, or null if parsing fails.
+ */
+function cleanData(string) {
+	try {
+		return JSON.parse(jsonrepair(string));
+	} catch (err) {
+		console.error(err);
+	}
 }
 
 /**
@@ -203,4 +214,4 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 	});
 });
 
-api.listen(port, () => console.log(`Application is running on port ${port}`));
+api.listen(port, () => console.log(`Application is running on port ${port} ${baseUrlPath}`));
