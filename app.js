@@ -51,7 +51,7 @@ function readAndParseFile(filePath) {
  */
 api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 	// Parse the page and limit query parameters. Defaults are page 1 and limit 12.
-	const page  = parseInt(req.query.page, 10) || 1;
+	const page = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 12;
 
 	// Get the current date and time
