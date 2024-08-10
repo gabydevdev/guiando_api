@@ -1,12 +1,13 @@
 {
 	"name": "guiando-api",
 	"version": "2.0.0",
-	"description": "",
+	"description": "A lightweight Express-based API for serving booking data from JSON files.",
+	"author": "gabriela <gabriela@devdev.me>",
+	"license": "GPL-3.0",
 	"keywords": [
 		"express",
 		"javascript",
 		"node",
-		"package.json",
 		"webhooks",
 		"api"
 	],
@@ -24,5 +25,13 @@
 	"devDependencies": {
 		"@types/body-parser": "^1.19.5",
 		"@types/express": "^4.17.21"
-	}
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/gabydevdev/guiando_api.git"
+	},
+	"bugs": {
+		"url": "https://github.com/gabydevdev/guiando_api/issues"
+	},
+	"homepage": "https://github.com/gabydevdev/guiando_api#readme"
 }
