@@ -207,3 +207,4 @@ GitHub.sublime-settings
 # Custom
 prepros.config
 booking_data/*
+booking_logs/*
