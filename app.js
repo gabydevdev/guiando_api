@@ -1,5 +1,6 @@
 const express = require("express");
 const fs = require("fs");
+const fsPromises = fs.promises; // Use fs promises for async/await
 const path = require("path");
 require("dotenv").config();
 const { jsonrepair } = require("jsonrepair");
@@ -13,6 +14,7 @@ api.use(express.json());
 const cleanData = require("./utils/dataCleaner");
 
 const bookingsDataLogs = path.join(__dirname, "booking_data");
+const bookingsLogs = path.join(__dirname, "booking_logs");
 
 const baseUrlPath = process.env.BASE_URL_PATH || "";
 const port = process.env.PORT || 3000;
@@ -137,6 +139,7 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 							creationDateISO: new Date(parseInt(parsedData.creationDate, 10)).toISOString(),
 							startDateTimeISO: startDateTimeISO,
 							endDateTimeISO: endDateTimeISO,
+							status: parsedData.status,
 						};
 					} else {
 						return null;
@@ -238,62 +241,90 @@ api.get(`${baseUrlPath}/webhook/zapier`, (req, res) => {
 	res.status(200).send("GET request to the /zapier endpoint");
 });
 
-api.post(`${baseUrlPath}/webhook/zapier`, (req, res) => {
-	if (!fs.existsSync(bookingsDataLogs)) {
-		fs.mkdirSync(bookingsDataLogs, { recursive: true });
+// POST /webhook/zapier - Create or Update booking file
+api.post(`${baseUrlPath}/webhook/zapier`, async (req, res) => {
+	const { bookingId } = req.body;
+
+	if (!bookingId) {
+		return res.status(400).send("Missing bookingId in request body");
 	}
 
-	// Get the current timestamp using Date.parse()
-	const event = new Date();
-	const timestamp = Date.parse(event); // Timestamp in milliseconds
+	const filePath = path.join(bookingsDataLogs, `${bookingId}.json`);
 
-	// Set the file path with the timestamp as the filename
-	const filePath = path.join(bookingsDataLogs, `${timestamp}.json`);
+	try {
+		let fileData = {}; // Initialize empty object for file data
 
-	// Write the file asynchronously
-	fs.writeFile(filePath, JSON.stringify(req.body, null, 2), (err) => {
-		if (err) {
-			console.error("Error writing file:", err);
-			return res.status(500).send("Error processing request");
+		// Check if the file exists
+		try {
+			await fsPromises.access(filePath); // Will throw if file does not exist
+			// If it exists, read the current content
+			const existingData = await fsPromises.readFile(filePath, "utf8");
+			fileData = JSON.parse(existingData); // Parse the existing file content
+		} catch (err) {
+			// If the file does not exist, we proceed with a new one
+			console.log(`File does not exist, creating new file: ${filePath}`);
 		}
 
-		// Respond with success and file name information
-		res.status(200).send(
-			`File created with timestamp ${timestamp}.json in the booking_data folder.`
-		);
-	});
+		// Add or update fields in fileData
+		fileData = {
+			...fileData, // Merge existing data (if any)
+			...req.body, // Overwrite with incoming data
+			updateDate: new Date().toISOString(), // Add/update updateDate
+		};
+
+		// Write the file back (create new or update existing)
+		await fsPromises.writeFile(filePath, JSON.stringify(fileData, null, 2));
+
+		res.status(200).send(`File created/updated with bookingId: ${bookingId}.json`);
+	} catch (err) {
+		console.error("Error processing request:", err);
+		res.status(500).send("Error processing request");
+	}
 });
 
 api.get(`${baseUrlPath}/webhook/bokun`, (req, res) => {
 	res.status(200).send("GET request to the /bokun endpoint");
 });
 
-api.post(`${baseUrlPath}/webhook/bokun`, (req, res) => {
-	const bookingsLogs = path.join(__dirname, "booking_logs");
+// POST /webhook/bokun - Create or Update booking file
+api.post(`${baseUrlPath}/webhook/bokun`, async (req, res) => {
+	const { bookingId } = req.body;
 
-	if (!fs.existsSync(bookingsLogs)) {
-		fs.mkdirSync(bookingsLogs, { recursive: true });
+	if (!bookingId) {
+		return res.status(400).send("Missing bookingId in request body");
 	}
 
-	// Get the current timestamp using Date.parse()
-	const event = new Date();
-	const timestamp = Date.parse(event); // Timestamp in milliseconds
+	const filePath = path.join(bookingsLogs, `${bookingId}.json`);
 
-	// Set the file path with the timestamp as the filename
-	const filePath = path.join(bookingsLogs, `${timestamp}.json`);
+	try {
+		let fileData = {}; // Initialize empty object for file data
 
-	// Write the file asynchronously
-	fs.writeFile(filePath, JSON.stringify(req.body, null, 2), (err) => {
-		if (err) {
-			console.error("Error writing file:", err);
-			return res.status(500).send("Error processing request");
+		// Check if the file exists
+		try {
+			await fsPromises.access(filePath); // Will throw if file does not exist
+			// If it exists, read the current content
+			const existingData = await fsPromises.readFile(filePath, "utf8");
+			fileData = JSON.parse(existingData); // Parse the existing file content
+		} catch (err) {
+			// If the file does not exist, we proceed with a new one
+			console.log(`File does not exist, creating new file: ${filePath}`);
 		}
 
-		// Respond with success and file name information
-		res.status(200).send(
-			`File created with timestamp ${timestamp}.json in the booking_logs folder.`
-		);
-	});
+		// Add or update fields in fileData
+		fileData = {
+			...fileData, // Merge existing data (if any)
+			...req.body, // Overwrite with incoming data
+			updateDate: new Date().toISOString(), // Add/update updateDate
+		};
+
+		// Write the file back (create new or update existing)
+		await fsPromises.writeFile(filePath, JSON.stringify(fileData, null, 2));
+
+		res.status(200).send(`File created/updated with bookingId: ${bookingId}.json`);
+	} catch (err) {
+		console.error("Error processing request:", err);
+		res.status(500).send("Error processing request");
+	}
 });
 
 api.listen(port, () => console.log(`Application is running on port ${port} ${baseUrlPath}`));
