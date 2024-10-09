@@ -16,11 +16,11 @@
 		"start": "node app.js"
 	},
 	"dependencies": {
-		"body-parser": "^1.20.2",
+		"body-parser": "^1.20.3",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.5",
-		"express": "^4.19.2",
-		"jsonrepair": "^3.8.0"
+		"express": "^4.21.1",
+		"jsonrepair": "^3.8.1"
 	},
 	"devDependencies": {
 		"@types/body-parser": "^1.19.5",
