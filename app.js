@@ -133,8 +133,8 @@ api.get(`${baseUrlPath}/api/bookings`, (req, res) => {
 						new Date(endDateTimeISO) < endDateTimeFilter
 					) {
 						return {
-							creationDateISO: new Date(parseInt(parsedData.creationDate, 10)).toISOString(),
 							bookingId: parsedData.bookingId,
+							creationDateISO: new Date(parseInt(parsedData.creationDate, 10)).toISOString(),
 							startDateTimeISO: startDateTimeISO,
 							endDateTimeISO: endDateTimeISO,
 						};
@@ -231,6 +231,68 @@ api.get(`${baseUrlPath}/api/booking/single`, (req, res) => {
 		} else {
 			return res.status(404).json({ message: "Booking not found" }); // Booking not found
 		}
+	});
+});
+
+api.get(`${baseUrlPath}/webhook/zapier`, (req, res) => {
+	res.status(200).send("GET request to the /zapier endpoint");
+});
+
+api.post(`${baseUrlPath}/webhook/zapier`, (req, res) => {
+	if (!fs.existsSync(bookingsDataLogs)) {
+		fs.mkdirSync(bookingsDataLogs, { recursive: true });
+	}
+
+	// Get the current timestamp using Date.parse()
+	const event = new Date();
+	const timestamp = Date.parse(event); // Timestamp in milliseconds
+
+	// Set the file path with the timestamp as the filename
+	const filePath = path.join(bookingsDataLogs, `${timestamp}.json`);
+
+	// Write the file asynchronously
+	fs.writeFile(filePath, JSON.stringify(req.body, null, 2), (err) => {
+		if (err) {
+			console.error("Error writing file:", err);
+			return res.status(500).send("Error processing request");
+		}
+
+		// Respond with success and file name information
+		res.status(200).send(
+			`File created with timestamp ${timestamp}.json in the booking_data folder.`
+		);
+	});
+});
+
+api.get(`${baseUrlPath}/webhook/bokun`, (req, res) => {
+	res.status(200).send("GET request to the /bokun endpoint");
+});
+
+api.post(`${baseUrlPath}/webhook/bokun`, (req, res) => {
+	const bookingsLogs = path.join(__dirname, "booking_logs");
+
+	if (!fs.existsSync(bookingsLogs)) {
+		fs.mkdirSync(bookingsLogs, { recursive: true });
+	}
+
+	// Get the current timestamp using Date.parse()
+	const event = new Date();
+	const timestamp = Date.parse(event); // Timestamp in milliseconds
+
+	// Set the file path with the timestamp as the filename
+	const filePath = path.join(bookingsLogs, `${timestamp}.json`);
+
+	// Write the file asynchronously
+	fs.writeFile(filePath, JSON.stringify(req.body, null, 2), (err) => {
+		if (err) {
+			console.error("Error writing file:", err);
+			return res.status(500).send("Error processing request");
+		}
+
+		// Respond with success and file name information
+		res.status(200).send(
+			`File created with timestamp ${timestamp}.json in the booking_logs folder.`
+		);
 	});
 });
 
